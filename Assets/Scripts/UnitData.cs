@@ -1,9 +1,12 @@
 using HighlightPlus;
+using Pathfinding;
 using System.Collections;
 using UnityEngine;
 
 public class UnitData : MonoBehaviour
 {
+    private AIHeroMovement aiHero;
+
     public float maxHP;
     public float HP;
 
@@ -24,10 +27,17 @@ public class UnitData : MonoBehaviour
     {
         HP = maxHP;
         isDefeated = false;
+        if (GetComponent<AIHeroMovement>()) { aiHero = GetComponent<AIHeroMovement>(); }
+        
     }
 
     private void Update()
     {
+        if(aiHero && HP <= maxHP / 4)
+        {
+            aiHero.state = AIHeroMovement.State.Fleeing;
+        }
+
         if(HP <= 0)
         {
             if (isHero)
@@ -51,12 +61,22 @@ public class UnitData : MonoBehaviour
         }
     }
 
-    public void RecieveDamage(float damage)
+    public void RecieveDamage(float damage, bool display = true)
     {
         HP -= damage;
 
-        HighlightEffect effect = transform.GetChild(0).GetChild(0).GetComponent<HighlightEffect>();
-        effect.HitFX();
+        if (HP > maxHP)
+        {
+            HP = maxHP;
+            if (GetComponent<AIHeroMovement>()) { GetComponent<AIHeroMovement>().state = AIHeroMovement.State.Default; }
+            return;
+        }
+
+        if (display)
+        {
+            HighlightEffect effect = transform.GetChild(0).GetChild(0).GetComponent<HighlightEffect>();
+            effect.HitFX();
+        }
     }
 
     void OnMouseOver()

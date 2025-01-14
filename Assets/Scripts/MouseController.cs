@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.TextCore.Text;
 
 public class MouseController : MonoBehaviour
 {
@@ -30,7 +31,21 @@ public class MouseController : MonoBehaviour
         Hero.GetComponent<Player_Movement>().SetDestinationData(mousePos(), hoveredCharacter);
         cursorMark.transform.localScale = new Vector3(.5f, .5f, 1);
         cursorMark.transform.position = mousePos();
-        cursorMark.transform.GetChild(0).GetComponent<Animator>().Play("clickanim", -1, 0f);
+
+        if(hoveredCharacter != null && hoveredCharacter.layer != Hero.layer)
+        {
+            cursorMark.transform.GetChild(0).gameObject.SetActive(false);
+            cursorMark.transform.GetChild(1).gameObject.SetActive(true);
+
+            cursorMark.transform.GetChild(1).GetComponent<Animator>().Play("orangeclick", -1, 0f);
+        }
+        else
+        {
+            cursorMark.transform.GetChild(1).gameObject.SetActive(false);
+            cursorMark.transform.GetChild(0).gameObject.SetActive(true);
+
+            cursorMark.transform.GetChild(0).GetComponent<Animator>().Play("clickanim", -1, 0f);
+        }
     }
 
     private void ShrinkObject()

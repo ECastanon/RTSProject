@@ -1,10 +1,9 @@
 using System.Collections;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
 
 public class AttackSkillTriggers : MonoBehaviour
 {
-    //=========================================================================
+    //========================================================================= 
     //  HEROES
     //=========================================================================
 
@@ -15,60 +14,134 @@ public class AttackSkillTriggers : MonoBehaviour
     {
         StartCoroutine(Sacrifice());
     }
+
     private IEnumerator Sacrifice()
     {
         GameObject target = GetNearestAlly();
-        GameObject flame = Instantiate(transform.parent.GetComponent<Hero_Data>().bloodFlame, target.transform.transform.position, Quaternion.identity);
-        flame.GetComponent<FollowCharacter>().myParent = target.transform;
+        if (target == null)
+        {
+            Debug.LogWarning("No ally found for Sacrifice.");
+            yield break;
+        }
+
+        GameObject flame = InstantiateFlame(target);
+        if (flame == null) yield break;
+
         yield return new WaitForSeconds(0.5f);
-        target.transform.GetComponent<UnitData>().HP = 0;
+
+        UnitData targetData = target.GetComponent<UnitData>();
+        if (targetData != null)
+        {
+            targetData.HP = 0;
+        }
+        else
+        {
+            Debug.LogWarning("Target does not have a UnitData component.");
+        }
+
         StartCoroutine(ActiveBuffs());
         flame.SetActive(false);
     }
+
+    private GameObject InstantiateFlame(GameObject target)
+    {
+        GameObject flame = null;
+        var parent = transform.parent;
+        if (parent.TryGetComponent(out Hero_Data heroData) && heroData.bloodFlame != null)
+        {
+            flame = Instantiate(heroData.bloodFlame, target.transform.position, Quaternion.identity);
+        }
+        else if (parent.TryGetComponent(out AICombatData aiCombatData) && aiCombatData.bloodFlame != null)
+        {
+            flame = Instantiate(aiCombatData.bloodFlame, target.transform.position, Quaternion.identity);
+        }
+
+        if (flame == null)
+        {
+            Debug.LogWarning("Flame object could not be instantiated.");
+            return null;
+        }
+
+        var followCharacter = flame.GetComponent<FollowCharacter>();
+        if (followCharacter != null)
+        {
+            followCharacter.myParent = target.transform;
+        }
+        else
+        {
+            Debug.LogWarning("Flame does not have a FollowCharacter component.");
+        }
+
+        return flame;
+    }
+
     private GameObject GetNearestAlly()
     {
-        int layerMask = 1 << transform.parent.gameObject.layer; // Convert the layer number to a layer mask
-        Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.parent.position, transform.parent.GetComponent<Hero_Data>().skillRange, layerMask);
+        var parent = transform.parent;
+        if (parent == null) return null;
+
+        var layerMask = 1 << parent.gameObject.layer;
+        var skillRange = parent.GetComponent<Hero_Data>()?.skillRange ?? parent.GetComponent<AICombatData>()?.skillRange ?? 0;
+
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(parent.position, skillRange, layerMask);
         GameObject nearestAlly = null;
         float shortestDistance = Mathf.Infinity;
 
         foreach (var collider in colliders)
         {
-            if (collider.gameObject != transform.parent.gameObject) // Ensure it's not the object itself
+            if (collider.gameObject == parent.gameObject) continue;
+
+            float distance = Vector2.Distance(parent.position, collider.transform.position);
+            if (distance < shortestDistance)
             {
-                float distance = Vector2.Distance(transform.parent.position, collider.transform.position);
-                if (distance < shortestDistance)
-                {
-                    shortestDistance = distance;
-                    nearestAlly = collider.gameObject;
-                }
+                shortestDistance = distance;
+                nearestAlly = collider.gameObject;
             }
         }
 
-        Debug.Log(nearestAlly);
         return nearestAlly;
     }
+
     private IEnumerator ActiveBuffs()
     {
-        //Heals 50% of their HP
-        transform.parent.GetComponent<UnitData>().HP += (int)(transform.parent.GetComponent<UnitData>().maxHP / 2);
-        if (transform.parent.GetComponent<UnitData>().HP > transform.parent.GetComponent<UnitData>().maxHP) { transform.parent.GetComponent<UnitData>().HP = transform.parent.GetComponent<UnitData>().maxHP; }
+        var parent = transform.parent;
+        var unitData = parent.GetComponent<UnitData>();
+        var movement = parent.GetComponent<Player_Movement>();
 
-        float oldDamage = transform.parent.GetComponent<Hero_Data>().damage;
-        float oldAS = transform.parent.GetComponent<Hero_Data>().attackSpeed;
-        float oldMS = transform.parent.GetComponent<Player_Movement>().moveSpeed;
+        // Try to retrieve either Hero_Data or AICombatData
+        var combatData = (Component)parent.GetComponent<Hero_Data>() ?? parent.GetComponent<AICombatData>();
 
-        //Increase Stats
-        transform.parent.GetComponent<Hero_Data>().damage *= 1.2f;
-        transform.parent.GetComponent<Hero_Data>().attackSpeed *= 0.5f;
-        transform.parent.GetComponent<Player_Movement>().moveSpeed *= 1.5f;
+        if (unitData == null || movement == null || combatData == null) yield break;
 
-        yield return new WaitForSeconds(transform.parent.GetComponent<Hero_Data>().skillDuration);
+        // Heal 50% of max HP
+        unitData.HP = Mathf.Min(unitData.HP + (int)(unitData.maxHP / 2), unitData.maxHP);
 
-        transform.parent.GetComponent<Hero_Data>().damage = oldDamage;
-        transform.parent.GetComponent<Hero_Data>().attackSpeed = oldAS;
-        transform.parent.GetComponent<Player_Movement>().moveSpeed = oldMS;
+        // Retrieve shared variables using reflection
+        var damageField = combatData.GetType().GetField("damage");
+        var attackSpeedField = combatData.GetType().GetField("attackSpeed");
+        var skillDurationField = combatData.GetType().GetField("skillDuration");
+
+        if (damageField == null || attackSpeedField == null || skillDurationField == null) yield break;
+
+        float oldDamage = (float)damageField.GetValue(combatData);
+        float oldAttackSpeed = (float)attackSpeedField.GetValue(combatData);
+        float skillDuration = (float)skillDurationField.GetValue(combatData);
+
+        // Modify stats
+        damageField.SetValue(combatData, oldDamage * 1.2f);
+        attackSpeedField.SetValue(combatData, oldAttackSpeed * 0.5f);
+        float oldMoveSpeed = movement.moveSpeed;
+        movement.moveSpeed *= 1.5f;
+
+        // Wait for the skill duration
+        yield return new WaitForSeconds(skillDuration);
+
+        // Revert stats
+        damageField.SetValue(combatData, oldDamage);
+        attackSpeedField.SetValue(combatData, oldAttackSpeed);
+        movement.moveSpeed = oldMoveSpeed;
     }
+
 
     //-------------------------------------------------------------------------
     //  GRACE
@@ -83,6 +156,7 @@ public class AttackSkillTriggers : MonoBehaviour
     {
         StartCoroutine(StartBuffSkill());
     }
+
     public IEnumerator StartBuffSkill()
     {
         transform.localScale = new Vector2(0.5f, 0.5f);
@@ -91,49 +165,56 @@ public class AttackSkillTriggers : MonoBehaviour
     }
 
     //-------------------------------------------------------------------------
-    //  Lucas
+    //  LUCAS
     //-------------------------------------------------------------------------
 
     public void SpawnLucasProjectile()
     {
-        Hero_Data hero = transform.parent.GetComponent<Hero_Data>();
-        GameObject proj = Instantiate(hero.lucasArrow, transform.position, Quaternion.identity);
-        proj.GetComponent<Projectile>().GetData(hero.damage, hero.target.transform, hero.targetLayer);
+        if (TryGetComponentFromParent<Hero_Data>(out var hero))
+        {
+            var proj = Instantiate(hero.lucasArrow, transform.position, Quaternion.identity);
+            proj.GetComponent<Projectile>().GetData(hero.damage, hero.target.transform, hero.targetLayer);
+        }
     }
 
     public void SpawnLucasSkill()
     {
-        Hero_Data hero = transform.parent.GetComponent<Hero_Data>();
-        GameObject proj = Instantiate(hero.stunArrow, transform.position, Quaternion.identity);
-        proj.GetComponent<StunArrow>().GetData(hero.stunLocation, hero.skillDuration, hero.targetLayer);
+        if (TryGetComponentFromParent<Hero_Data>(out var hero))
+        {
+            var proj = Instantiate(hero.stunArrow, transform.position, Quaternion.identity);
+            proj.GetComponent<StunArrow>().GetData(hero.stunLocation, hero.skillDuration, hero.targetLayer);
+        }
     }
 
     //=========================================================================
     //  UNITS
     //=========================================================================
 
-    //-------------------------------------------------------------------------
-    //  Archer
-    //-------------------------------------------------------------------------
     public void SpawnProjectile()
     {
-        GameObject proj = Instantiate(transform.parent.GetComponent<UnitCombat_Data>().arrowPrefab, transform.parent.position, Quaternion.identity);
-        proj.GetComponent<Projectile>().GetData(transform.parent.GetComponent<UnitCombat_Data>().damage, transform.parent.GetComponent<UnitCombat_Data>().target, transform.parent.GetComponent<UnitCombat_Data>().targetLayer);
+        if (TryGetComponentFromParent<UnitCombat_Data>(out var combatData))
+        {
+            var proj = Instantiate(combatData.arrowPrefab, transform.parent.position, Quaternion.identity);
+            proj.GetComponent<Projectile>().GetData(combatData.damage, combatData.target, combatData.targetLayer);
+        }
     }
 
-    //-------------------------------------------------------------------------
-    //  SwordFighter
-    //-------------------------------------------------------------------------
     public void DealDamage()
     {
-        if (transform.parent.GetComponent<UnitCombat_Data>())
+        if (TryGetComponentFromParent<UnitCombat_Data>(out var combatData))
         {
-            transform.parent.GetComponent<UnitCombat_Data>().DealDamage();
+            combatData.DealDamage();
+        }
 
-        }
-        if (transform.parent.GetComponent<Hero_Data>())
+        if (TryGetComponentFromParent<Hero_Data>(out var hero))
         {
-            transform.parent.GetComponent<Hero_Data>().DealDamage();
+            hero.DealDamage();
         }
+    }
+
+    private bool TryGetComponentFromParent<T>(out T component) where T : Component
+    {
+        component = transform.parent?.GetComponent<T>();
+        return component != null;
     }
 }
