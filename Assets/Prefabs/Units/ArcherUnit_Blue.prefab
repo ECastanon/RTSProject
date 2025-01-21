@@ -1954,7 +1954,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   path: []
   pathCounter: 0
-  moveSpeed: 1.5
+  moveSpeed: 2
   primaryTarget: {fileID: 0}
   target: {fileID: 0}
 --- !u!58 &1127140497033619995
