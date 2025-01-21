@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using static MiniMapManager;
 
 public class UnitSpawner : MonoBehaviour
 {
@@ -12,6 +13,8 @@ public class UnitSpawner : MonoBehaviour
     public List<Transform> paths_Red = new List<Transform>();
     private int pathCounter;
 
+    private MiniMapManager mmapManager;
+
     private void Start()
     {
         foreach (Transform path in GameObject.Find("WayPoints_Blue").transform)
@@ -23,6 +26,7 @@ public class UnitSpawner : MonoBehaviour
             paths_Red.Add(path);
         }
 
+        mmapManager = GameObject.Find("MMap").GetComponent<MiniMapManager>();
         pathCounter = Random.Range(0, paths_Blue.Count);
     }
 
@@ -36,6 +40,11 @@ public class UnitSpawner : MonoBehaviour
             {
                 unit.layer = LayerMask.NameToLayer("Player");
                 unit.GetComponent<AIAgent>().primaryTarget = GameObject.Find("Totem_Enemy").transform;
+
+                unit.GetComponent<AIAgent>().minimapID = mmapManager.PlayerIconList.Count;
+                unit.GetComponent<AIAgent>().unitType = "PlayerUnit";
+                mmapManager.CreateIconOnMap("PlayerUnit");
+
                 foreach (Transform path in paths_Blue[pathCounter])
                 {
                     unit.GetComponent<AIAgent>().path.Add(path);
@@ -51,6 +60,11 @@ public class UnitSpawner : MonoBehaviour
             {
                 unit.layer = LayerMask.NameToLayer("Enemy");
                 unit.GetComponent<AIAgent>().primaryTarget = GameObject.Find("Totem_Player").transform;
+
+                unit.GetComponent<AIAgent>().minimapID = mmapManager.EnemyIconList.Count;
+                unit.GetComponent<AIAgent>().unitType = "EnemyUnit";
+                mmapManager.CreateIconOnMap("EnemyUnit");
+
                 foreach (Transform path in paths_Red[pathCounter])
                 {
                     unit.GetComponent<AIAgent>().path.Add(path);

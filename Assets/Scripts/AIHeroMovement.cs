@@ -1,5 +1,6 @@
 using Pathfinding;
 using Unity.VisualScripting;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public class AIHeroMovement: MonoBehaviour
@@ -18,10 +19,15 @@ public class AIHeroMovement: MonoBehaviour
     public Transform target;
     public float moveSpeed;
 
+    [Header("MiniMap Data")]
+    private MiniMapManager mmapManager;
+    private string unitType = "Enemy";
+
     void Start()
     {
         anim = transform.GetChild(0).GetComponent<Animator>();
         aipath = GetComponent<AIPath>();
+        mmapManager = GameObject.Find("MMap").GetComponent<MiniMapManager>();
 
         target = primaryTarget;
     }
@@ -105,5 +111,12 @@ public class AIHeroMovement: MonoBehaviour
     {
         aipath.maxSpeed = moveSpeed;
         aipath.destination = pos;
+
+        UpdateMiniMapPos();
+    }
+
+    private void UpdateMiniMapPos()
+    {
+        mmapManager.MoveOnMap(transform, 0, unitType);
     }
 }

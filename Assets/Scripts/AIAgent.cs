@@ -11,12 +11,18 @@ public class AIAgent : MonoBehaviour
     public Transform primaryTarget;
     public Transform target;
 
+    [Header("MiniMap Data")]
+    [HideInInspector] public MiniMapManager mmapManager;
+    public int minimapID;
+    public string unitType;
+
     private Animator anim;
 
     void Start()
     {
         anim = transform.GetChild(0).GetComponent<Animator>();
         aipath = GetComponent<AIPath>();
+        mmapManager = GameObject.Find("MMap").GetComponent<MiniMapManager>();
     }
 
     void Update()
@@ -37,6 +43,8 @@ public class AIAgent : MonoBehaviour
         {
             aipath.canMove = false;
         }
+
+
     }
 
     private void FollowTarget()
@@ -92,6 +100,13 @@ public class AIAgent : MonoBehaviour
     {
         aipath.maxSpeed = moveSpeed;
         aipath.destination = pos;
+
+        UpdateMiniMapPos();
+    }
+
+    private void UpdateMiniMapPos()
+    {
+        mmapManager.MoveOnMap(transform, minimapID, unitType);
     }
 }
 

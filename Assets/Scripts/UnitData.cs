@@ -1,7 +1,9 @@
 using HighlightPlus;
 using Pathfinding;
 using System.Collections;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using static UnitCombat_Data;
 
 public class UnitData : MonoBehaviour
 {
@@ -115,6 +117,8 @@ public class UnitData : MonoBehaviour
         if (!isDefeated)
         {
             isDefeated = true;
+            GetComponent<AIAgent>().mmapManager.RemoveIconFromMap(GetComponent<AIAgent>().minimapID, GetComponent<AIAgent>().unitType);
+
             GameObject.Find("GameManager").GetComponent<GoldManager>().AddSubtractGold(defeatValue);
             StartCoroutine(DeathStun());
         }

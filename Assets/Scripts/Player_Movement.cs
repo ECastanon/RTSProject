@@ -1,4 +1,5 @@
 using UnityEngine;
+using static UnitCombat_Data;
 
 public class Player_Movement : MonoBehaviour
 {
@@ -15,9 +16,16 @@ public class Player_Movement : MonoBehaviour
     private Vector2 posLastFrame;
     private Vector2 posThisFrame;
 
+    [Header("MiniMap Data")]
+    private MiniMapManager mmapManager;
+    private string unitType = "Player";
+
     void Start()
     {
         anim = transform.GetChild(0).GetComponent<Animator>();
+        mmapManager = GameObject.Find("MMap").GetComponent<MiniMapManager>();
+        UpdateMiniMapPos();
+
         location = transform.position;
     }
 
@@ -66,6 +74,11 @@ public class Player_Movement : MonoBehaviour
                 anim.SetBool("isMoving", false);
             }
         }
+
+        if (anim.GetBool("isMoving") == true)
+        {
+            UpdateMiniMapPos();
+        }
     }
 
     private void CheckMoveDirection()
@@ -83,5 +96,10 @@ public class Player_Movement : MonoBehaviour
             // Moving Left
             transform.GetChild(0).localRotation = Quaternion.Euler(0, 0, 0);
         }
+    }
+
+    private void UpdateMiniMapPos()
+    {
+        mmapManager.MoveOnMap(transform, 0, unitType);
     }
 }
