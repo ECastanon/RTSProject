@@ -23,6 +23,16 @@ public class MouseController : MonoBehaviour
     {
         var mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         mouseWorldPos.z = 0f;
+        Debug.Log("Mouse Clicked on: " +  mouseWorldPos);
+        return mouseWorldPos;
+    }
+    private Vector2 mouseTilePos()
+    {
+        var mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mouseWorldPos.x = Mathf.Floor(mouseWorldPos.x) + 0.5f;
+        mouseWorldPos.y = Mathf.Floor(mouseWorldPos.y) + 0.5f;
+        mouseWorldPos.z = 0f;
+        Debug.Log("Mouse Clicked on: " + mouseWorldPos);
         return mouseWorldPos;
     }
 
