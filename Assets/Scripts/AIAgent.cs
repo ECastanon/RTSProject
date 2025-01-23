@@ -43,8 +43,6 @@ public class AIAgent : MonoBehaviour
         {
             aipath.canMove = false;
         }
-
-
     }
 
     private void FollowTarget()

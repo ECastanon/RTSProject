@@ -14,6 +14,7 @@ public class UnitSpawner : MonoBehaviour
     private int pathCounter;
 
     private MiniMapManager mmapManager;
+    private UnitPooler unitPooler;
 
     private void Start()
     {
@@ -27,6 +28,7 @@ public class UnitSpawner : MonoBehaviour
         }
 
         mmapManager = GameObject.Find("MMap").GetComponent<MiniMapManager>();
+        unitPooler = GameObject.Find("UnitPooler").GetComponent<UnitPooler>();
         pathCounter = Random.Range(0, paths_Blue.Count);
     }
 
@@ -35,7 +37,9 @@ public class UnitSpawner : MonoBehaviour
         if (timer >= timeToSpawn)
         {
             timer = 0;
-            GameObject unit = Instantiate(UnitToSpawn, transform.position, Quaternion.identity);
+            GameObject unit = unitPooler.RequestUnit(UnitToSpawn, ownedByPlayer);
+            unit.transform.position = transform.position;
+            unit.SetActive(true);
             if(ownedByPlayer)
             {
                 unit.layer = LayerMask.NameToLayer("Player");

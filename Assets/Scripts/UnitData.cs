@@ -1,6 +1,7 @@
 using HighlightPlus;
 using Pathfinding;
 using System.Collections;
+using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using static UnitCombat_Data;
@@ -99,16 +100,24 @@ public class UnitData : MonoBehaviour
             GetComponent<AIAgent>().moveSpeed = 0;
         }
         yield return new WaitForSeconds(deathTimer);
-        //StartUnit();
+        ResetUnit();
         gameObject.SetActive(false);
     }
 
-    public void DisableAllCircleColliders()
+    private void DisableAllCircleColliders()
     {
         CircleCollider2D[] colliders = GetComponents<CircleCollider2D>();
         foreach (CircleCollider2D collider in colliders)
         {
             collider.enabled = false;
+        }
+    }
+    private void EnableAllCircleColliders()
+    {
+        CircleCollider2D[] colliders = GetComponents<CircleCollider2D>();
+        foreach (CircleCollider2D collider in colliders)
+        {
+            collider.enabled = true;
         }
     }
 
@@ -122,5 +131,34 @@ public class UnitData : MonoBehaviour
             GameObject.Find("GameManager").GetComponent<GoldManager>().AddSubtractGold(defeatValue);
             StartCoroutine(DeathStun());
         }
+    }
+
+    private void ResetUnit()
+    {
+        AIAgent ai = GetComponent<AIAgent>();
+
+        ai.path.Clear();
+        ai.pathCounter = 0;
+        ai.target = null;
+        ai.minimapID = 0;
+        ai.unitType = "";
+        ai.moveSpeed = 2;
+
+        HP = maxHP;
+        isDefeated = false;
+
+        GetComponent<AIPath>().canMove = true;
+
+        //Fix closed eyes from being enabled when reseting the unit
+        transform.GetChild(0).GetChild(0).GetChild(0).GetChild(0).GetChild(2).GetChild(0).GetChild(3).GetChild(2).gameObject.SetActive(false);
+        transform.GetChild(0).GetChild(0).GetChild(0).GetChild(0).GetChild(2).GetChild(0).GetChild(3).GetChild(3).gameObject.SetActive(false);
+
+        EnableAllCircleColliders();
+
+        bool isBlue = false;
+        if (gameObject.name.Contains("Blue")) { isBlue = true; }
+
+        UnitPooler unitPooler = GameObject.Find("UnitPooler").GetComponent<UnitPooler>();
+        gameObject.SetActive(false);
     }
 }
