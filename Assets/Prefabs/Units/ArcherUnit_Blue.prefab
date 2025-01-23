@@ -1957,6 +1957,9 @@ MonoBehaviour:
   moveSpeed: 2
   primaryTarget: {fileID: 0}
   target: {fileID: 0}
+  mmapManager: {fileID: 0}
+  minimapID: 0
+  unitType: 
 --- !u!58 &1127140497033619995
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -2323,6 +2326,7 @@ GameObject:
   - component: {fileID: 1758142644226464317}
   - component: {fileID: 4817676700724452817}
   - component: {fileID: 773398084381756924}
+  - component: {fileID: 8875918570399914812}
   m_Layer: 0
   m_Name: Root
   m_TagString: Untagged
@@ -3076,6 +3080,18 @@ MonoBehaviour:
   hitFxFadeOutDuration: 0.25
   hitFxColor: {r: 0.9716981, g: 0.21542363, b: 0.21542363, a: 1}
   hitFxRadius: 0.5
+--- !u!114 &8875918570399914812
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4832239079811400068}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8703a612cf7b144c86f9355ad4421a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &4845712711212698467
 GameObject:
   m_ObjectHideFlags: 0

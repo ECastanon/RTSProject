@@ -16,9 +16,20 @@ public class UnitCombat_Data : MonoBehaviour
     public GameObject arrowPrefab; // Only used for Archer
     [HideInInspector] public Transform target;
 
+    private float updateInterval = 0.25f;
+    private void Start()
+    {
+        InvokeRepeating("UpdateInterval", updateInterval, updateInterval);
+    }
+
+    private void UpdateInterval()
+    {
+        //use this as the secondary update.
+        CheckForTargetsInRange();
+    }
+
     private void Update()
     {
-        CheckForTargetsInRange();
         Attack();
         CheckTargetIsAlive();
     }

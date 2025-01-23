@@ -1,10 +1,7 @@
 using HighlightPlus;
 using Pathfinding;
 using System.Collections;
-using UnityEditor;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-using static UnitCombat_Data;
 
 public class UnitData : MonoBehaviour
 {
@@ -75,7 +72,7 @@ public class UnitData : MonoBehaviour
             return;
         }
 
-        if (display)
+        if (display && transform.GetChild(0).GetChild(0).GetComponent<HighlightEffect>())
         {
             HighlightEffect effect = transform.GetChild(0).GetChild(0).GetComponent<HighlightEffect>();
             effect.HitFX();
@@ -148,6 +145,7 @@ public class UnitData : MonoBehaviour
         isDefeated = false;
 
         GetComponent<AIPath>().canMove = true;
+        transform.GetChild(0).GetComponent<Animator>().Play("MOVE");
 
         //Fix closed eyes from being enabled when reseting the unit
         transform.GetChild(0).GetChild(0).GetChild(0).GetChild(0).GetChild(2).GetChild(0).GetChild(3).GetChild(2).gameObject.SetActive(false);
@@ -155,10 +153,6 @@ public class UnitData : MonoBehaviour
 
         EnableAllCircleColliders();
 
-        bool isBlue = false;
-        if (gameObject.name.Contains("Blue")) { isBlue = true; }
-
-        UnitPooler unitPooler = GameObject.Find("UnitPooler").GetComponent<UnitPooler>();
         gameObject.SetActive(false);
     }
 }

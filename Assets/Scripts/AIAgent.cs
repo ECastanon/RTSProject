@@ -8,6 +8,7 @@ public class AIAgent : MonoBehaviour
     public List<Transform> path = new List<Transform>();
     public int pathCounter;
     public float moveSpeed;
+
     public Transform primaryTarget;
     public Transform target;
 

@@ -1,10 +1,12 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 [ExecuteInEditMode]
 public class SpritePos : MonoBehaviour
 {
+    //Created some lag when played in the editor
+    //Can uncomment if needed later
+
+    /*
     #if UNITY_EDITOR
     // Update is called once per frame
     void Update()
@@ -16,4 +18,5 @@ public class SpritePos : MonoBehaviour
         transform.localPosition = new Vector3(tX,tY,0);
     }
     #endif
+    */
 }
