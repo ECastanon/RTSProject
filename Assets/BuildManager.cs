@@ -1,10 +1,9 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class BuildManager : MonoBehaviour
 {
     public GameObject buildCanvas;
+    public GameObject buildGridView;
 
     public bool buildModeEnabled;
 
@@ -12,6 +11,8 @@ public class BuildManager : MonoBehaviour
     {
         buildCanvas = GameObject.Find("BuildCanvas");
         buildCanvas.SetActive(false);
+        buildGridView = GameObject.Find("BuildGrid");
+        buildGridView.SetActive(false);
     }
 
     private void Update()
@@ -19,16 +20,25 @@ public class BuildManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             buildModeEnabled = !buildModeEnabled;
+
+            if (buildModeEnabled)
+            {
+                buildCanvas.SetActive(true);
+                buildGridView.SetActive(true);
+            }
+            else
+            {
+                buildCanvas.SetActive(false);
+                buildGridView.SetActive(false);
+            }
         }
 
         if (buildModeEnabled)
         {
-            buildCanvas.SetActive(true);
             Time.timeScale = 0.0f;
         }
         else
         {
-            buildCanvas.SetActive(false);
             Time.timeScale = 1.0f;
         }
     }
