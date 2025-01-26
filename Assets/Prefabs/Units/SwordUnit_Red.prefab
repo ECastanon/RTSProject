@@ -4555,7 +4555,7 @@ CircleCollider2D:
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
-  m_Radius: 0.35
+  m_Radius: 0.05
 --- !u!58 &-1461809770305116955
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -4829,7 +4829,7 @@ MonoBehaviour:
   seeThroughTextureUVSpace: 0
   seeThroughTextureScale: 1
   seeThroughChildrenSortingMode: 0
-  rmsCount: 28
+  rmsCount: 29
   hitFxInitialIntensity: 1
   hitFxMode: 0
   hitFxFadeOutDuration: 0.25
