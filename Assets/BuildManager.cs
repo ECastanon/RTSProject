@@ -10,6 +10,7 @@ public class BuildManager : MonoBehaviour
     public bool buildModeEnabled;
 
     public GameObject structurePlaceHolder;
+    public GameObject structureToPlace;
 
     private Vector2 tilePos;
 
@@ -80,6 +81,8 @@ public class BuildManager : MonoBehaviour
 
     private void CheckStructurePlacement(string size)
     {
+        //Checks if the structure can fit within the given sizes.
+        //If it cannot the function will end before placement is called
         if(size == "2x3")
         {
             Vector2[] tileOffsets = {
@@ -100,8 +103,6 @@ public class BuildManager : MonoBehaviour
                     return;
                 }
             }
-
-            Debug.Log("STRUCTURE PLACED!");
         }
         if (size == "3x5")
         {
@@ -132,8 +133,15 @@ public class BuildManager : MonoBehaviour
                     return;
                 }
             }
-
-            Debug.Log("STRUCTURE PLACED!");
         }
+
+        Debug.Log("STRUCTURE PLACED!");
+        PlaceStructure();
+    }
+
+    private void PlaceStructure()
+    {
+        Instantiate(structureToPlace, tilePos, Quaternion.identity);
+        GameObject.Find("PathFinder").GetComponent<AstarPath>().Scan();
     }
 }
