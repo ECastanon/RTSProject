@@ -2088,8 +2088,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   unitType: 0
-  aggressionRange: 2.5
-  attackRange: 2
+  aggressionRange: 3.5
+  attackRange: 3
   targetLayer:
     serializedVersion: 2
     m_Bits: 0

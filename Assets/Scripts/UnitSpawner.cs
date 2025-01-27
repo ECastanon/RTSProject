@@ -6,7 +6,9 @@ public class UnitSpawner : MonoBehaviour
 {
     public GameObject UnitToSpawn;
     public bool ownedByPlayer;
+    public int numberToSpawn;
     public float timeToSpawn;
+    public List<Transform> spawnLocations = new List<Transform>();
     private float timer;
 
     public List<Transform> paths_Blue = new List<Transform>();
@@ -36,52 +38,57 @@ public class UnitSpawner : MonoBehaviour
     {
         if (timer >= timeToSpawn)
         {
-            timer = 0;
-            GameObject unit = unitPooler.RequestUnit(UnitToSpawn, ownedByPlayer);
-            unit.transform.position = transform.position;
-            unit.SetActive(true);
-            if(ownedByPlayer)
+            int spawnCount = 0;
+            while(spawnCount < numberToSpawn)
             {
-                unit.layer = LayerMask.NameToLayer("Player");
-                unit.GetComponent<AIAgent>().primaryTarget = GameObject.Find("Totem_Enemy").transform;
-
-                unit.GetComponent<AIAgent>().minimapID = mmapManager.PlayerIconList.Count;
-                unit.GetComponent<AIAgent>().unitType = "PlayerUnit";
-                mmapManager.CreateIconOnMap("PlayerUnit");
-
-                foreach (Transform path in paths_Blue[pathCounter])
+                timer = 0;
+                GameObject unit = unitPooler.RequestUnit(UnitToSpawn, ownedByPlayer);
+                unit.transform.position = spawnLocations[spawnCount].position;
+                unit.SetActive(true);
+                if (ownedByPlayer)
                 {
-                    unit.GetComponent<AIAgent>().path.Add(path);
+                    unit.layer = LayerMask.NameToLayer("Player");
+                    unit.GetComponent<AIAgent>().primaryTarget = GameObject.Find("Totem_Enemy").transform;
+
+                    unit.GetComponent<AIAgent>().minimapID = mmapManager.PlayerIconList.Count;
+                    unit.GetComponent<AIAgent>().unitType = "PlayerUnit";
+                    mmapManager.CreateIconOnMap("PlayerUnit");
+
+                    foreach (Transform path in paths_Blue[pathCounter])
+                    {
+                        unit.GetComponent<AIAgent>().path.Add(path);
+                    }
+                    unit.GetComponent<AIAgent>().path.Add(GameObject.Find("Totem_Enemy").transform);
+                    //=====================================================================================
+                    if (unit.GetComponent<UnitCombat_Data>())
+                    {
+                        unit.GetComponent<UnitCombat_Data>().targetLayer = 1 << 7;
+                    }
                 }
-                unit.GetComponent<AIAgent>().path.Add(GameObject.Find("Totem_Enemy").transform);
-                //=====================================================================================
-                if (unit.GetComponent<UnitCombat_Data>())
+                else
                 {
-                    unit.GetComponent<UnitCombat_Data>().targetLayer = 1 << 7;
+                    unit.layer = LayerMask.NameToLayer("Enemy");
+                    unit.GetComponent<AIAgent>().primaryTarget = GameObject.Find("Totem_Player").transform;
+
+                    unit.GetComponent<AIAgent>().minimapID = mmapManager.EnemyIconList.Count;
+                    unit.GetComponent<AIAgent>().unitType = "EnemyUnit";
+                    mmapManager.CreateIconOnMap("EnemyUnit");
+
+                    foreach (Transform path in paths_Red[pathCounter])
+                    {
+                        unit.GetComponent<AIAgent>().path.Add(path);
+                    }
+                    unit.GetComponent<AIAgent>().path.Add(GameObject.Find("Totem_Player").transform);
+                    //=====================================================================================
+                    if (unit.GetComponent<UnitCombat_Data>())
+                    {
+                        unit.GetComponent<UnitCombat_Data>().targetLayer = 1 << 8;
+                    }
                 }
+                pathCounter++;
+                if (pathCounter > 2) { pathCounter = 0; }
+                spawnCount++;
             }
-            else
-            {
-                unit.layer = LayerMask.NameToLayer("Enemy");
-                unit.GetComponent<AIAgent>().primaryTarget = GameObject.Find("Totem_Player").transform;
-
-                unit.GetComponent<AIAgent>().minimapID = mmapManager.EnemyIconList.Count;
-                unit.GetComponent<AIAgent>().unitType = "EnemyUnit";
-                mmapManager.CreateIconOnMap("EnemyUnit");
-
-                foreach (Transform path in paths_Red[pathCounter])
-                {
-                    unit.GetComponent<AIAgent>().path.Add(path);
-                }
-                unit.GetComponent<AIAgent>().path.Add(GameObject.Find("Totem_Player").transform);
-                //=====================================================================================
-                if (unit.GetComponent<UnitCombat_Data>())
-                {
-                    unit.GetComponent<UnitCombat_Data>().targetLayer = 1 << 8;
-                }
-            }
-            pathCounter++;
-            if (pathCounter > 2) { pathCounter = 0; }
         }
         timer += Time.deltaTime;
     }

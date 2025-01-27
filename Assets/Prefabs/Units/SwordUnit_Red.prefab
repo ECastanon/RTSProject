@@ -4630,7 +4630,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 962af257e057f3548b9b4c80be2edbb9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHP: 12
+  maxHP: 17
   HP: 0
   isHero: 0
   deathTimer: 3

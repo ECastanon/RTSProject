@@ -7,7 +7,7 @@ public class Projectile : MonoBehaviour
     public float lifeTime;
     private float timer;
 
-    private Transform target;
+    public Transform target;
     private LayerMask targetLayer;
     private Vector2 dir;
 
@@ -15,8 +15,15 @@ public class Projectile : MonoBehaviour
 
     private void Update()
     {
-        TimerDeath();
-        MoveTowardsTarget();
+        if (!target)
+        {
+            gameObject.SetActive(false);
+        }
+        else
+        {
+            TimerDeath();
+            MoveTowardsTarget();
+        }
     }
 
     private void MoveTowardsTarget()
