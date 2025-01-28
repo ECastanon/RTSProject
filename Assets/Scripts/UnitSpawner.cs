@@ -1,25 +1,38 @@
 using System.Collections.Generic;
 using UnityEngine;
-using static MiniMapManager;
+using UnityEngine.UI;
 
 public class UnitSpawner : MonoBehaviour
 {
+    [Header("HP Values")]
+    public float totalHP;
+    public float hp;
+
+    [Header("Spawn Data")]
     public GameObject UnitToSpawn;
     public bool ownedByPlayer;
     public int numberToSpawn;
     public float timeToSpawn;
-    public List<Transform> spawnLocations = new List<Transform>();
     private float timer;
+    public List<Transform> spawnLocations = new List<Transform>();
 
+    [Header("Pathing Data")]
     public List<Transform> paths_Blue = new List<Transform>();
     public List<Transform> paths_Red = new List<Transform>();
     private int pathCounter;
 
+    [Header("Canvas Bars")]
+    public Image buildBar;
+    public Transform buildBarDamagedPos;
+    public Image hpBar;
+
+    //References
     private MiniMapManager mmapManager;
     private UnitPooler unitPooler;
 
     private void Start()
     {
+        hp = totalHP;
         foreach (Transform path in GameObject.Find("WayPoints_Blue").transform)
         {
             paths_Blue.Add(path);
@@ -90,6 +103,24 @@ public class UnitSpawner : MonoBehaviour
                 spawnCount++;
             }
         }
+
+        if(hp < totalHP)
+        {
+            hpBar.fillAmount = hp / totalHP;
+            buildBar.transform.parent.position = buildBarDamagedPos.position;
+        }
+        else {
+            hpBar.fillAmount = 0;
+            buildBar.transform.parent.position = hpBar.transform.parent.transform.position;
+        }
+
+        buildBar.fillAmount = timer / timeToSpawn;
+        
         timer += Time.deltaTime;
+    }
+
+    public void UpdateHP(float value)
+    {
+        hp += value;
     }
 }

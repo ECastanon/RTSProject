@@ -2,15 +2,21 @@ using UnityEngine;
 
 public class BuildManager : MonoBehaviour
 {
-    public GameObject buildCanvas;
-    public GameObject buildGridView;
-
+    private GameObject buildCanvas;
+    private GameObject buildGridView;
     private MouseController mouseController;
 
     public bool buildModeEnabled;
 
     public GameObject structurePlaceHolder;
+
+    public GameObject[] placeHolders;
+
     public GameObject structureToPlace;
+
+    public GameObject[] structures;
+
+    private string buildSize = "";
 
     private Vector2 tilePos;
 
@@ -34,6 +40,7 @@ public class BuildManager : MonoBehaviour
 
             if (buildModeEnabled)
             {
+                buildSize = "";
                 buildCanvas.SetActive(true);
                 buildGridView.SetActive(true);
                 structurePlaceHolder.SetActive(true);
@@ -52,9 +59,9 @@ public class BuildManager : MonoBehaviour
             tilePos = mouseController.mouseTilePos();
             structurePlaceHolder.transform.position = tilePos;
 
-            if (Input.GetMouseButtonDown(0))
+            if (Input.GetMouseButtonDown(0) && buildSize != "")
             {
-                CheckStructurePlacement("2x3");
+                CheckStructurePlacement(buildSize);
             }
         }
         else
@@ -134,7 +141,10 @@ public class BuildManager : MonoBehaviour
                 }
             }
         }
-
+        else
+        {
+            Debug.Log("INCORRECT SIZE: " + size);
+        }
         Debug.Log("STRUCTURE PLACED!");
         PlaceStructure();
     }
@@ -143,5 +153,24 @@ public class BuildManager : MonoBehaviour
     {
         Instantiate(structureToPlace, tilePos, Quaternion.identity);
         GameObject.Find("PathFinder").GetComponent<AstarPath>().Scan();
+    }
+
+    //BuildCavas Button Actions
+    public void ArcherSpawnerLevel1()
+    {
+        buildSize = "2x3";
+        placeHolders[1].SetActive(false);
+        placeHolders[0].SetActive(true);
+        structurePlaceHolder = placeHolders[0];
+        structureToPlace = structures[0];
+
+    }
+    public void ArcherSpawnerLevel2()
+    {
+        buildSize = "3x5";
+        placeHolders[0].SetActive(false);
+        placeHolders[1].SetActive(true);
+        structurePlaceHolder = placeHolders[1];
+        structureToPlace = structures[1];
     }
 }
