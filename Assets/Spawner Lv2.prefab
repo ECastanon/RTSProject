@@ -367,7 +367,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8341f5be13389ba469f32b63a24222f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  totalHP: 0
+  totalHP: 140
   hp: 0
   UnitToSpawn: {fileID: 4619220038370211738, guid: a4415aad491031649b6c07fdb5496abc, type: 3}
   ownedByPlayer: 1
@@ -380,7 +380,7 @@ MonoBehaviour:
   paths_Blue: []
   paths_Red: []
   buildBar: {fileID: 1747634794766667483}
-  buildBarDamagedPos: {fileID: 6596103643117023231}
+  buildBarDamagedPos: {fileID: 8665494743996684035}
   hpBar: {fileID: 2786951261349814879}
 --- !u!61 &1548658284114347684
 BoxCollider2D:
@@ -397,7 +397,7 @@ BoxCollider2D:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 1152
+    m_Bits: 0
   m_LayerOverridePriority: 0
   m_ForceSendLayers:
     serializedVersion: 2

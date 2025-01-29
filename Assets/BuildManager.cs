@@ -75,7 +75,7 @@ public class BuildManager : MonoBehaviour
         bool isAvailable = true;
 
         // Cast a ray straight down
-        RaycastHit2D hit = Physics2D.Raycast(tile, -Vector2.up, Mathf.Infinity, LayerMask.GetMask("Structure"));
+        RaycastHit2D hit = Physics2D.Raycast(tile, -Vector2.up, Mathf.Infinity, LayerMask.GetMask("Structure_Player"));
 
         // If it hits something on the specified layer...
         if (hit.collider != null)

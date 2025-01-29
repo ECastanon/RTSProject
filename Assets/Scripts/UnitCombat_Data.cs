@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class UnitCombat_Data : MonoBehaviour
 {
-    public enum UnitType { Archer, SwordFighter }
+    public enum UnitType { Archer, SwordFighter, Mage }
     public UnitType unitType;
 
     public float aggressionRange;
@@ -14,7 +14,7 @@ public class UnitCombat_Data : MonoBehaviour
     private float timer;
 
     public GameObject arrowPrefab; // Only used for Archer
-    [HideInInspector] public Transform target;
+    public Transform target;
 
     private float updateInterval = 0.25f;
     private void Start()
@@ -59,6 +59,7 @@ public class UnitCombat_Data : MonoBehaviour
     {
         target = GetComponent<AIAgent>().target;
 
+        //Units cannot attack while defeated
         if (target && !GetComponent<UnitData>().isDefeated)
         {
             float dist = Vector3.Distance(target.position, transform.position);
@@ -72,6 +73,9 @@ public class UnitCombat_Data : MonoBehaviour
 
                     case UnitType.SwordFighter:
                         PerformSwordFighterAttack();
+                        break;
+                    case UnitType.Mage:
+                        PerformSwordMageAttack();
                         break;
                 }
                 timer = 0;
@@ -94,13 +98,27 @@ public class UnitCombat_Data : MonoBehaviour
         //Deals Damage during the animation
     }
 
+    private void PerformSwordMageAttack()
+    {
+        transform.GetChild(0).GetComponent<Animator>().Play("Attack_Mage");
+    }
+
     private void CheckTargetIsAlive()
     {
-        if (target && target.GetComponent<UnitData>().HP <= 0)
+        if (target && target.GetComponent<UnitSpawner>())
+        {
+            if (target.GetComponent<UnitSpawner>().hp <= 0)
+            {
+                GetComponent<AIAgent>().target = null;
+                target = null;
+                return;
+            }
+        } else if (target && target.GetComponent<UnitData>().HP <= 0)
         {
             GetComponent<AIAgent>().target = null;
             target = null;
         }
+
     }
 
     public void DealDamage()

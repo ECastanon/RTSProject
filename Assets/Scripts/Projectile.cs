@@ -12,6 +12,7 @@ public class Projectile : MonoBehaviour
     private Vector2 dir;
 
     public bool lookAtTarget;
+    public bool canDamageStructures;
 
     private void Update()
     {
@@ -45,22 +46,42 @@ public class Projectile : MonoBehaviour
         // Check if the collided object's layer matches the target layer
         if (((1 << other.gameObject.layer) & targetLayer) != 0)
         {
-            if (other.gameObject.GetComponent<UnitData>())
+            UnitData unitData = other.gameObject.GetComponent<UnitData>();
+            UnitSpawner unitSpawner = other.gameObject.GetComponent<UnitSpawner>();
+
+            if (unitData != null)
             {
-                other.gameObject.GetComponent<UnitData>().RecieveDamage(damage);
+                unitData.RecieveDamage(damage);
             }
+            else if (canDamageStructures && unitSpawner != null)
+            {
+                unitSpawner.UpdateHP(damage);
+            }
+
             gameObject.SetActive(false);
         }
     }
 
+
     private void TimerDeath()
     {
         timer += Time.deltaTime;
-        if (timer > lifeTime || !target.gameObject.activeSelf || target.GetComponent<UnitData>().HP <= 0)
+
+        if (timer > lifeTime || target == null || !target.gameObject.activeSelf)
+        {
+            gameObject.SetActive(false);
+            return;
+        }
+
+        UnitData unitData = target.GetComponent<UnitData>();
+        UnitSpawner unitSpawner = target.GetComponent<UnitSpawner>();
+
+        if ((unitData != null && unitData.HP <= 0) || (unitSpawner != null && unitSpawner.hp <= 0))
         {
             gameObject.SetActive(false);
         }
     }
+
 
     public void GetData(float damage_, Transform target_, LayerMask layer_)
     {

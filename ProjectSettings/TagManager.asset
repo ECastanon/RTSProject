@@ -14,8 +14,8 @@ TagManager:
   - Obstacle
   - Enemy
   - Player
-  - Structure
-  - AILayer
+  - Structure_Player
+  - Structure_Enemy
   - 
   - 
   - 

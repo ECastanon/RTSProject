@@ -33,6 +33,8 @@ public class UnitSpawner : MonoBehaviour
     private void Start()
     {
         hp = totalHP;
+        hpBar.fillAmount = 0;
+
         foreach (Transform path in GameObject.Find("WayPoints_Blue").transform)
         {
             paths_Blue.Add(path);
@@ -75,7 +77,11 @@ public class UnitSpawner : MonoBehaviour
                     //=====================================================================================
                     if (unit.GetComponent<UnitCombat_Data>())
                     {
-                        unit.GetComponent<UnitCombat_Data>().targetLayer = 1 << 7;
+                        unit.GetComponent<UnitCombat_Data>().targetLayer += 1 << 7;
+                        if(unit.GetComponent<UnitCombat_Data>().unitType == UnitCombat_Data.UnitType.Mage)
+                        {
+                            unit.GetComponent<UnitCombat_Data>().targetLayer += 1 << 10;
+                        }
                     }
                 }
                 else
@@ -104,15 +110,7 @@ public class UnitSpawner : MonoBehaviour
             }
         }
 
-        if(hp < totalHP)
-        {
-            hpBar.fillAmount = hp / totalHP;
-            buildBar.transform.parent.position = buildBarDamagedPos.position;
-        }
-        else {
-            hpBar.fillAmount = 0;
-            buildBar.transform.parent.position = hpBar.transform.parent.transform.position;
-        }
+
 
         buildBar.fillAmount = timer / timeToSpawn;
         
@@ -121,6 +119,21 @@ public class UnitSpawner : MonoBehaviour
 
     public void UpdateHP(float value)
     {
-        hp += value;
+        hp -= value;
+        if(hp <= 0)
+        {
+            gameObject.SetActive(false);
+        }
+
+        if (hp < totalHP)
+        {
+            hpBar.fillAmount = hp / totalHP;
+            buildBar.transform.parent.position = buildBarDamagedPos.position;
+        }
+        else
+        {
+            hpBar.fillAmount = 0;
+            buildBar.transform.parent.position = hpBar.transform.parent.transform.position;
+        }
     }
 }
