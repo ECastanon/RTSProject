@@ -8,6 +8,8 @@ public class GoldManager : MonoBehaviour
     public int gold;
     public TextMeshProUGUI goldtext;
 
+    public int enemyGold;
+
     public void AddSubtractGold(int value)
     {
         gold += value;

@@ -90,7 +90,7 @@ public class BuildManager : MonoBehaviour
     {
         //Checks if the structure can fit within the given sizes.
         //If it cannot the function will end before placement is called
-        if(size == "2x3")
+        if(size == "3x2")
         {
             Vector2[] tileOffsets = {
                 new Vector2(1, 0),
@@ -111,7 +111,7 @@ public class BuildManager : MonoBehaviour
                 }
             }
         }
-        if (size == "3x5")
+        if (size == "5x3")
         {
             Vector2[] tileOffsets = {
                 new Vector2(1, 0),
@@ -158,7 +158,7 @@ public class BuildManager : MonoBehaviour
     //BuildCavas Button Actions
     public void ArcherSpawnerLevel1()
     {
-        buildSize = "2x3";
+        buildSize = "3x2";
         placeHolders[1].SetActive(false);
         placeHolders[0].SetActive(true);
         structurePlaceHolder = placeHolders[0];
@@ -167,7 +167,7 @@ public class BuildManager : MonoBehaviour
     }
     public void ArcherSpawnerLevel2()
     {
-        buildSize = "3x5";
+        buildSize = "5x3";
         placeHolders[0].SetActive(false);
         placeHolders[1].SetActive(true);
         structurePlaceHolder = placeHolders[1];
