@@ -77,6 +77,7 @@ public class UnitSpawner : MonoBehaviour
                     //=====================================================================================
                     if (unit.GetComponent<UnitCombat_Data>())
                     {
+                        unit.GetComponent<UnitCombat_Data>().targetLayer = 0;
                         unit.GetComponent<UnitCombat_Data>().targetLayer += 1 << 7;
                         if(unit.GetComponent<UnitCombat_Data>().unitType == UnitCombat_Data.UnitType.Mage)
                         {
@@ -101,7 +102,12 @@ public class UnitSpawner : MonoBehaviour
                     //=====================================================================================
                     if (unit.GetComponent<UnitCombat_Data>())
                     {
+                        unit.GetComponent<UnitCombat_Data>().targetLayer = 0;
                         unit.GetComponent<UnitCombat_Data>().targetLayer = 1 << 8;
+                        if (unit.GetComponent<UnitCombat_Data>().unitType == UnitCombat_Data.UnitType.Mage)
+                        {
+                            unit.GetComponent<UnitCombat_Data>().targetLayer += 1 << 9;
+                        }
                     }
                 }
                 pathCounter++;
