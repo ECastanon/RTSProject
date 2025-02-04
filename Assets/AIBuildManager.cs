@@ -9,14 +9,17 @@ public class AIBuildManager : MonoBehaviour
     public Vector2Int gridSize;
     private Structures[,] spawnGrid;
 
+    //Gold Management
+    private GoldManager gm;
+    public int gold; //Only to be used in the inspector, use gm.enemyGold for other calculations
+    private int startingGold;
+    private bool startingGoldSpent;
+
     public List<Structures> structureList = new List<Structures>();
 
     private GameObject structureToBuild;
 
-    private GoldManager gm;
-
-    private int startingGold;
-    private bool startingGoldSpent;
+    public Vector2 buildPositonOffset;
 
     private float SetUpdateSpeed()
     {
@@ -45,6 +48,7 @@ public class AIBuildManager : MonoBehaviour
 
         gm = GameObject.Find("GameManager").GetComponent<GoldManager>();
         startingGold = gm.enemyGold;
+        gold = gm.enemyGold;
 
         InvokeRepeating("UpdateInterval", SetUpdateSpeed(), SetUpdateSpeed());
     }
@@ -66,6 +70,7 @@ public class AIBuildManager : MonoBehaviour
                 //
                 break;
         }
+        gold = gm.enemyGold;
     }
 
     private Structures GetLowestQualityStructure()
@@ -133,18 +138,17 @@ public class AIBuildManager : MonoBehaviour
             new Vector2Int(-1, 0)  // Left
         };
 
-        // Example: Favor placements near existing buildings
         foreach (Vector2Int dir in directions)
         {
             Vector2Int neighbor = position + dir;
-            if (IsOccupied(neighbor))
+            if (IsInBounds(neighbor) && IsOccupied(neighbor))
             {
-                score += 5; // More points for adjacency
+                score += 5;
             }
         }
 
-        // Example: Avoid placing near edges (penalize near border)
-        if (position.x == 0 || position.x == gridSize.x - 1 || position.y == 0 || position.y == gridSize.y - 1)
+        if (position.x == 0 || position.x == gridSize.x - 1 ||
+            position.y == 0 || position.y == gridSize.y - 1)
         {
             score -= 3;
         }
@@ -181,6 +185,11 @@ public class AIBuildManager : MonoBehaviour
         }
 
         return occupied;
+    }
+
+    private bool IsInBounds(Vector2Int pos)
+    {
+        return pos.x >= 0 && pos.x < gridSize.x && pos.y >= 0 && pos.y < gridSize.y;
     }
 
     //===========================================================================================================
@@ -221,8 +230,8 @@ public class AIBuildManager : MonoBehaviour
                 if (buildPos != Vector2Int.one * -1)
                 {
                     // Instantiate the structure at the position. Adjust the position conversion as needed.
-                    Vector3 worldPos = new Vector3(buildPos.x, 0, buildPos.y);
-                    Instantiate(rushStructure.structToSpawn, worldPos, Quaternion.identity);
+                    Vector2 worldPos = new Vector2(buildPos.x, buildPos.y);
+                    Instantiate(rushStructure.structToSpawn, worldPos + buildPositonOffset, Quaternion.identity);
 
                     // Deduct the cost
                     gm.enemyGold -= rushStructure.cost;
@@ -251,8 +260,8 @@ public class AIBuildManager : MonoBehaviour
                 if (buildPos != Vector2Int.one * -1)
                 {
                     // Instantiate the structure at the position. Adjust the position conversion as needed.
-                    Vector3 worldPos = new Vector3(buildPos.x, 0, buildPos.y);
-                    Instantiate(mostExpStructure.structToSpawn, worldPos, Quaternion.identity);
+                    Vector2 worldPos = new Vector2(buildPos.x, buildPos.y);
+                    Instantiate(mostExpStructure.structToSpawn, worldPos + buildPositonOffset, Quaternion.identity);
 
                     // Deduct the cost
                     gm.enemyGold -= mostExpStructure.cost;

@@ -125,7 +125,18 @@ public class UnitData : MonoBehaviour
             isDefeated = true;
             GetComponent<AIAgent>().mmapManager.RemoveIconFromMap(GetComponent<AIAgent>().minimapID, GetComponent<AIAgent>().unitType);
 
-            GameObject.Find("GameManager").GetComponent<GoldManager>().AddSubtractGold(defeatValue);
+            //Checks and sends money to the correct integer value
+            bool moneyGoesToPlayer = false;
+            if (LayerMask.LayerToName(gameObject.layer).Contains("Player"))
+            {
+                moneyGoesToPlayer = false;
+            }
+            else
+            {
+                moneyGoesToPlayer = true;
+            }
+            GameObject.Find("GameManager").GetComponent<GoldManager>().AddSubtractGold(defeatValue, moneyGoesToPlayer);
+
             StartCoroutine(DeathStun());
         }
     }

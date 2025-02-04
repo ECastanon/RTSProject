@@ -10,9 +10,16 @@ public class GoldManager : MonoBehaviour
 
     public int enemyGold;
 
-    public void AddSubtractGold(int value)
+    public void AddSubtractGold(int value, bool goesToPlayer)
     {
-        gold += value;
-        goldtext.text = "Gold: " + gold.ToString();
+        if(goesToPlayer)
+        {
+            gold += value;
+            goldtext.text = "Gold: " + gold.ToString();
+        }
+        else
+        {
+            enemyGold += value;
+        }
     }
 }
