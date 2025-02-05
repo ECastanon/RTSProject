@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using static UnityEditor.PlayerSettings;
 
 public class AIBuildManager : MonoBehaviour
 {
@@ -9,27 +10,25 @@ public class AIBuildManager : MonoBehaviour
     public Vector2Int gridSize;
     private Structures[,] spawnGrid;
 
-    //Gold Management
+    // Gold Management
     private GoldManager gm;
-    public int gold; //Only to be used in the inspector, use gm.enemyGold for other calculations
+    public int gold; // Only for inspector reference; use gm.enemyGold for calculations
     private int startingGold;
-    private bool startingGoldSpent;
+    public bool startingGoldSpent; //
 
     public List<Structures> structureList = new List<Structures>();
-
-    private GameObject structureToBuild;
 
     public Vector2 buildPositonOffset;
 
     private float SetUpdateSpeed()
     {
-        //Sets the update speed (in seconds) to be based on the ai type
-        float updatespeed = 1;
+        // Sets the update speed (in seconds) based on the AI type
+        float updatespeed = 1f;
 
         switch (aiType)
         {
             case AIType.Rush:
-                updatespeed = 1f;
+                updatespeed = .1f;
                 break;
             case AIType.Conserve:
                 updatespeed = 10f;
@@ -57,17 +56,14 @@ public class AIBuildManager : MonoBehaviour
     {
         switch (aiType)
         {
-            //Create a new script housing the rush ai logic
             case AIType.Rush:
                 RushAiLogic();
                 break;
-            //Create a new script housing the conserve ai logic
             case AIType.Conserve:
-                //
+                // Conserve logic here...
                 break;
-            //Create a new script housing the evolve ai logic
             case AIType.Evolve:
-                //
+                // Evolve logic here...
                 break;
         }
         gold = gm.enemyGold;
@@ -80,7 +76,7 @@ public class AIBuildManager : MonoBehaviour
 
         foreach (Structures s in structureList)
         {
-            // Check if this structure's quality is lower than the current lowest.
+            // Choose the structure with the lowest quality value
             if (s.quality < lowestQuality)
             {
                 lowestQuality = s.quality;
@@ -90,15 +86,16 @@ public class AIBuildManager : MonoBehaviour
 
         return chosen;
     }
+
     private Structures GetHighestCostStructure()
     {
         Structures chosen = null;
-        int highestPrice = int.MaxValue;
+        int highestPrice = int.MinValue; // Use int.MinValue to look for the highest cost
 
         foreach (Structures s in structureList)
         {
-            // Check if this structure's quality is lower than the current lowest.
-            if (s.cost < highestPrice)
+            // Choose the structure with the highest cost that can still be built
+            if (s.cost > highestPrice)
             {
                 highestPrice = s.cost;
                 chosen = s;
@@ -111,7 +108,7 @@ public class AIBuildManager : MonoBehaviour
     Vector2Int FindBestBuildLocation()
     {
         Vector2Int bestPosition = Vector2Int.one * -1;
-        float highestScore = 0;
+        float highestScore = float.MinValue; // start with a very low score
 
         foreach (Vector2Int pos in GetAllEmptyGridPositions())
         {
@@ -165,7 +162,7 @@ public class AIBuildManager : MonoBehaviour
         {
             for (int y = 0; y < gridSize.y; y++)
             {
-                // Check if the cell is empty (no structure present)
+                // If the cell is empty (no structure present), add it to the list
                 if (spawnGrid[x, y] == null)
                 {
                     emptyPositions.Add(new Vector2Int(x, y));
@@ -178,13 +175,14 @@ public class AIBuildManager : MonoBehaviour
 
     private bool IsOccupied(Vector2Int pos)
     {
-        bool occupied = false;
-        if (spawnGrid[pos.x, pos.y] == null)
+        // First ensure the position is within bounds
+        if (!IsInBounds(pos))
         {
-            occupied = true;
+            return false;
         }
 
-        return occupied;
+        // Return true if the cell is not empty
+        return spawnGrid[pos.x, pos.y] != null;
     }
 
     private bool IsInBounds(Vector2Int pos)
@@ -192,85 +190,83 @@ public class AIBuildManager : MonoBehaviour
         return pos.x >= 0 && pos.x < gridSize.x && pos.y >= 0 && pos.y < gridSize.y;
     }
 
+    private void BuildStructure(Structures structure)
+    {
+        // Base condition: if there isn't enough gold to build the structure, exit function.
+        if (structure == null || gm.enemyGold < structure.cost)
+        {
+            return;
+        }
+
+        Vector2Int buildPos = FindBestBuildLocation();
+        if (buildPos == Vector2Int.one * -1)
+        {
+            return; // No valid build location was found.
+        }
+
+        // Instantiate the structure at the specified world position (plus an offset)
+        Vector2 worldPos = buildPos + buildPositonOffset;
+        Instantiate(structure.structToSpawn, worldPos, Quaternion.identity);
+
+        //Update currencies and grid locations
+        gm.enemyGold -= structure.cost;
+        startingGold -= structure.cost;
+        spawnGrid[buildPos.x, buildPos.y] = structure;
+    }
+
     //===========================================================================================================
     // Rush AI
     //===========================================================================================================
     private void RushAiLogic()
     {
-        //When starting gold still remains
+        // When starting gold is still available, build the cheapest (lowest quality) structures.
         if (!startingGoldSpent)
         {
-            SpendMoneyOnCheapestStructuresImmediately();
+            Structures rushStructure = GetLowestQualityStructure();
+
+            if (startingGold < rushStructure.cost)
+            {
+                startingGoldSpent = true;
+            }
+            else
+            {
+                BuildStructure(rushStructure);
+            }
             return;
         }
 
-        //When starting gold is empty
-        BuildMostExpensiveStructure();
-
-    }
-
-    private void SpendMoneyOnCheapestStructuresImmediately()
-    {
-        Structures rushStructure = GetLowestQualityStructure();
-
-        //Continues this each update cycle until the initial starting gold has been spent
-        if (startingGold < rushStructure.cost)
+        // When starting gold is spent, build the most expensive buildable structure.
+        Structures structure = FindMostExpensiveANDBuildableStructure();
+        if (structure == null)
         {
-            startingGoldSpent = true;
+            return;
         }
-        if (!startingGoldSpent)
+        else if(gm.enemyGold >= structure.cost)
         {
-            // If we have a valid structure and enough money...
-            if (gm.enemyGold >= rushStructure.cost)
-            {
-                // Try to find a valid build location.
-                Vector2Int buildPos = FindBestBuildLocation();
-
-                // If a valid position is found...
-                if (buildPos != Vector2Int.one * -1)
-                {
-                    // Instantiate the structure at the position. Adjust the position conversion as needed.
-                    Vector2 worldPos = new Vector2(buildPos.x, buildPos.y);
-                    Instantiate(rushStructure.structToSpawn, worldPos + buildPositonOffset, Quaternion.identity);
-
-                    // Deduct the cost
-                    gm.enemyGold -= rushStructure.cost;
-                    startingGold -= rushStructure.cost;
-
-                    // Mark the grid as occupied with this structure.
-                    spawnGrid[buildPos.x, buildPos.y] = rushStructure;
-                }
-            }
+            BuildStructure(structure);
         }
     }
 
-    private void BuildMostExpensiveStructure()
+    private Structures FindMostExpensiveANDBuildableStructure()
     {
-        Structures mostExpStructure = GetHighestCostStructure();
+        Structures chosen = null;
+        int highestCost = -1;
 
-        if (!startingGoldSpent)
+        List<Structures> tempList = new List<Structures>(structureList);
+        foreach (Structures s in tempList)
         {
-            // If we have a valid structure and enough money...
-            if (gm.enemyGold >= mostExpStructure.cost)
+            // Only consider structures that can be afforded.
+            if (s.cost <= gm.enemyGold)
             {
-                // Try to find a valid build location.
-                Vector2Int buildPos = FindBestBuildLocation();
-
-                // If a valid position is found...
-                if (buildPos != Vector2Int.one * -1)
+                if (s.cost > highestCost)
                 {
-                    // Instantiate the structure at the position. Adjust the position conversion as needed.
-                    Vector2 worldPos = new Vector2(buildPos.x, buildPos.y);
-                    Instantiate(mostExpStructure.structToSpawn, worldPos + buildPositonOffset, Quaternion.identity);
-
-                    // Deduct the cost
-                    gm.enemyGold -= mostExpStructure.cost;
-
-                    // Mark the grid as occupied with this structure.
-                    spawnGrid[buildPos.x, buildPos.y] = mostExpStructure;
+                    highestCost = s.cost;
+                    chosen = s;
                 }
             }
         }
+
+        return chosen;
     }
 }
 
@@ -282,6 +278,7 @@ public class Structures
     [Tooltip("X,Y")] public string size;
     public int quality;
 }
+
 
 /*Idea to have several AI types
 -----------------------------------
