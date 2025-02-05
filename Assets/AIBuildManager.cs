@@ -7,6 +7,7 @@ public class AIBuildManager : MonoBehaviour
     public enum AIType { Rush, Conserve, Evolve }
     public AIType aiType;
 
+    //Jungle stage is 16.5, -4.5
     public Vector2Int gridSize;
     private Structures[,] spawnGrid;
 
@@ -14,11 +15,11 @@ public class AIBuildManager : MonoBehaviour
     private GoldManager gm;
     public int gold; // Only for inspector reference; use gm.enemyGold for calculations
     private int startingGold;
-    public bool startingGoldSpent; //
+    private bool startingGoldSpent;
 
     public List<Structures> structureList = new List<Structures>();
 
-    public Vector2 buildPositonOffset;
+    public Vector2 buildPositionOffset;
 
     private float SetUpdateSpeed()
     {
@@ -28,7 +29,7 @@ public class AIBuildManager : MonoBehaviour
         switch (aiType)
         {
             case AIType.Rush:
-                updatespeed = .1f;
+                updatespeed = 1f;
                 break;
             case AIType.Conserve:
                 updatespeed = 10f;
@@ -205,7 +206,7 @@ public class AIBuildManager : MonoBehaviour
         }
 
         // Instantiate the structure at the specified world position (plus an offset)
-        Vector2 worldPos = buildPos + buildPositonOffset;
+        Vector2 worldPos = buildPos + buildPositionOffset;
         Instantiate(structure.structToSpawn, worldPos, Quaternion.identity);
 
         //Update currencies and grid locations
