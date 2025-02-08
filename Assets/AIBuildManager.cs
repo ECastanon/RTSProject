@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using static UnityEditor.PlayerSettings;
 
 public class AIBuildManager : MonoBehaviour
 {
@@ -20,6 +19,17 @@ public class AIBuildManager : MonoBehaviour
     public List<Structures> structureList = new List<Structures>();
 
     public Vector2 buildPositionOffset;
+
+    private void Start()
+    {
+        spawnGrid = new Structures[gridSize.x, gridSize.y];
+
+        gm = GameObject.Find("GameManager").GetComponent<GoldManager>();
+        startingGold = gm.enemyGold;
+        gold = gm.enemyGold;
+
+        InvokeRepeating("UpdateInterval", SetUpdateSpeed(), SetUpdateSpeed());
+    }
 
     private float SetUpdateSpeed()
     {
@@ -42,17 +52,6 @@ public class AIBuildManager : MonoBehaviour
         return updatespeed;
     }
 
-    private void Start()
-    {
-        spawnGrid = new Structures[gridSize.x, gridSize.y];
-
-        gm = GameObject.Find("GameManager").GetComponent<GoldManager>();
-        startingGold = gm.enemyGold;
-        gold = gm.enemyGold;
-
-        InvokeRepeating("UpdateInterval", SetUpdateSpeed(), SetUpdateSpeed());
-    }
-
     private void UpdateInterval()
     {
         switch (aiType)
@@ -70,6 +69,10 @@ public class AIBuildManager : MonoBehaviour
         gold = gm.enemyGold;
     }
 
+    //===========================================================================================================
+    // Supporting Functions
+    //===========================================================================================================
+
     private Structures GetLowestQualityStructure()
     {
         Structures chosen = null;
@@ -81,24 +84,6 @@ public class AIBuildManager : MonoBehaviour
             if (s.quality < lowestQuality)
             {
                 lowestQuality = s.quality;
-                chosen = s;
-            }
-        }
-
-        return chosen;
-    }
-
-    private Structures GetHighestCostStructure()
-    {
-        Structures chosen = null;
-        int highestPrice = int.MinValue; // Use int.MinValue to look for the highest cost
-
-        foreach (Structures s in structureList)
-        {
-            // Choose the structure with the highest cost that can still be built
-            if (s.cost > highestPrice)
-            {
-                highestPrice = s.cost;
                 chosen = s;
             }
         }
@@ -193,26 +178,127 @@ public class AIBuildManager : MonoBehaviour
 
     private void BuildStructure(Structures structure)
     {
-        // Base condition: if there isn't enough gold to build the structure, exit function.
+        // If there isn't enough gold to build the structure, exit.
         if (structure == null || gm.enemyGold < structure.cost)
         {
             return;
         }
 
-        Vector2Int buildPos = FindBestBuildLocation();
-        if (buildPos == Vector2Int.one * -1)
+        // Start the recursive placement process.
+        BuildStructureRecursive(structure, GetAllEmptyGridPositions());
+    }
+
+    private void BuildStructureRecursive(Structures structure, List<Vector2Int> candidates)
+    {
+        // If no more candidates remain, then exit.
+        if (candidates.Count == 0)
         {
-            return; // No valid build location was found.
+            Debug.Log("No More Valid Positons Avaiable");
+            return;
         }
 
-        // Instantiate the structure at the specified world position (plus an offset)
-        Vector2 worldPos = buildPos + buildPositionOffset;
-        Instantiate(structure.structToSpawn, worldPos, Quaternion.identity);
+        // Pick a random candidate index.
+        int index = Random.Range(0, candidates.Count);
+        Vector2Int buildPos = candidates[index];
+        // Remove it from the candidate list so we don't try it again.
+        candidates.RemoveAt(index);
 
-        //Update currencies and grid locations
-        gm.enemyGold -= structure.cost;
-        startingGold -= structure.cost;
-        spawnGrid[buildPos.x, buildPos.y] = structure;
+        //Set the tile offsets based on structure size
+        Vector2Int[] tileOffsets = new Vector2Int[] {new Vector2Int(0, 0)};
+        if(structure.size == new Vector2(3, 2)) //Use 3x2 Size
+        {
+            tileOffsets = new Vector2Int[]
+            {
+                new Vector2Int(-1, 0), // left-bottom
+                new Vector2Int(0, 0),  // bottom-middle (origin is here)
+                new Vector2Int(1, 0),  // right-bottom
+                new Vector2Int(-1, 1), // left-top
+                new Vector2Int(0, 1),  // middle-top
+                new Vector2Int(1, 1)   // right-top
+            };
+        }
+        if (structure.size == new Vector2(5, 3)) //Use 5x3 Size
+        {
+            tileOffsets = new Vector2Int[]
+            {
+                new Vector2Int(1, 0),
+                new Vector2Int(1, 1),
+                new Vector2Int(0, 1),
+                new Vector2Int(-1, 1),
+                new Vector2Int(-1, 0),
+                new Vector2Int(0, 0),
+                new Vector2Int(1, -1),
+                new Vector2Int(0, -1),
+                new Vector2Int(-1, -1),
+                new Vector2Int(2, 1),
+                new Vector2Int(2, 0),
+                new Vector2Int(2, -1),
+                new Vector2Int(-2, 1),
+                new Vector2Int(-2, 0),
+                new Vector2Int(-2, -1)
+            };
+        }
+
+
+        // Check that every required cell is within bounds and unoccupied.
+        bool canPlace = true;
+        foreach (Vector2Int offset in tileOffsets)
+        {
+            Vector2Int checkPos = buildPos + offset;
+            if (!IsInBounds(checkPos) || spawnGrid[checkPos.x, checkPos.y] != null)
+            {
+                canPlace = false;
+                break;
+            }
+        }
+
+        if (canPlace)
+        {
+            // Mark all the cells as occupied.
+            foreach (Vector2Int offset in tileOffsets)
+            {
+                Vector2Int posToMark = buildPos + offset;
+                spawnGrid[posToMark.x, posToMark.y] = structure;
+            }
+
+            // Instantiate the structure at the desired world position.
+            // (Assuming buildPositionOffset is used to convert from grid space to world space.)
+            Vector2 worldPos = buildPos + buildPositionOffset;
+            Instantiate(structure.structToSpawn, worldPos, Quaternion.identity);
+
+            // Deduct the cost.
+            gm.enemyGold -= structure.cost;
+            startingGold -= structure.cost;
+        }
+        else
+        {
+            // Candidate position was invalid.
+            // Recurse and try again with the remaining candidates.
+            BuildStructureRecursive(structure, candidates);
+        }
+    }
+
+
+    private Structures FindMostExpensiveStructure()
+    {
+        Structures chosen = null;
+        int highestCost = -1;
+
+        List<Structures> tempList = new List<Structures>(structureList);
+        foreach (Structures s in tempList)
+        {
+            // Only consider structures that can be afforded.
+            if (s.cost <= gm.enemyGold)
+            {
+                if (s.cost > highestCost)
+                {
+                    highestCost = s.cost;
+                    chosen = s;
+                }
+            }
+        }
+
+        return chosen;
     }
 
     //===========================================================================================================
@@ -237,7 +323,7 @@ public class AIBuildManager : MonoBehaviour
         }
 
         // When starting gold is spent, build the most expensive buildable structure.
-        Structures structure = FindMostExpensiveANDBuildableStructure();
+        Structures structure = FindMostExpensiveStructure();
         if (structure == null)
         {
             return;
@@ -247,28 +333,6 @@ public class AIBuildManager : MonoBehaviour
             BuildStructure(structure);
         }
     }
-
-    private Structures FindMostExpensiveANDBuildableStructure()
-    {
-        Structures chosen = null;
-        int highestCost = -1;
-
-        List<Structures> tempList = new List<Structures>(structureList);
-        foreach (Structures s in tempList)
-        {
-            // Only consider structures that can be afforded.
-            if (s.cost <= gm.enemyGold)
-            {
-                if (s.cost > highestCost)
-                {
-                    highestCost = s.cost;
-                    chosen = s;
-                }
-            }
-        }
-
-        return chosen;
-    }
 }
 
 [System.Serializable]
@@ -276,7 +340,7 @@ public class Structures
 {
     public GameObject structToSpawn;
     public int cost;
-    [Tooltip("X,Y")] public string size;
+    [Tooltip("Width,Height")] public Vector2Int size;
     public int quality;
 }
 
