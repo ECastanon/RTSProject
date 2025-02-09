@@ -194,6 +194,11 @@ public class AIBuildManager : MonoBehaviour
         if (candidates.Count == 0)
         {
             Debug.Log("No More Valid Positons Avaiable");
+
+            //If no valid spot is available,
+            //Sell the lowest quality structure currently owned and clear the space,
+            //Then attempt to build again if there is space
+
             return;
         }
 
