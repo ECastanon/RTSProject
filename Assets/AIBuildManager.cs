@@ -9,6 +9,33 @@ public class AIBuildManager : MonoBehaviour
     //Jungle stage is 16.5, -4.5
     public Vector2Int gridSize;
     private Structures[,] spawnGrid;
+    private Vector2Int[] ThreeXTwo = new Vector2Int[]
+    {
+        new Vector2Int(-1, 0), // left-bottom
+        new Vector2Int(0, 0),  // bottom-middle (origin is here)
+        new Vector2Int(1, 0),  // right-bottom
+        new Vector2Int(-1, 1), // left-top
+        new Vector2Int(0, 1),  // middle-top
+        new Vector2Int(1, 1)   // right-top
+    };
+    private Vector2Int[] FiveXThree = new Vector2Int[]
+    {
+        new Vector2Int(1, 0),
+        new Vector2Int(1, 1),
+        new Vector2Int(0, 1),
+        new Vector2Int(-1, 1),
+        new Vector2Int(-1, 0),
+        new Vector2Int(0, 0),
+        new Vector2Int(1, -1),
+        new Vector2Int(0, -1),
+        new Vector2Int(-1, -1),
+        new Vector2Int(2, 1),
+        new Vector2Int(2, 0),
+        new Vector2Int(2, -1),
+        new Vector2Int(-2, 1),
+        new Vector2Int(-2, 0),
+        new Vector2Int(-2, -1)
+    };
 
     // Gold Management
     private GoldManager gm;
@@ -17,6 +44,7 @@ public class AIBuildManager : MonoBehaviour
     private bool startingGoldSpent;
 
     public List<Structures> structureList = new List<Structures>();
+    public List<GameObject> structuresOnField;
 
     public Vector2 buildPositionOffset;
 
@@ -195,9 +223,8 @@ public class AIBuildManager : MonoBehaviour
         {
             Debug.Log("No More Valid Positons Avaiable");
 
-            //If no valid spot is available,
-            //Sell the lowest quality structure currently owned and clear the space,
-            //Then attempt to build again if there is space
+            //If no valid spot is available, sell the lowest quality structure currently owned and clear the space,
+            SellLowestQualityStructure();
 
             return;
         }
@@ -212,36 +239,11 @@ public class AIBuildManager : MonoBehaviour
         Vector2Int[] tileOffsets = new Vector2Int[] {new Vector2Int(0, 0)};
         if(structure.size == new Vector2(3, 2)) //Use 3x2 Size
         {
-            tileOffsets = new Vector2Int[]
-            {
-                new Vector2Int(-1, 0), // left-bottom
-                new Vector2Int(0, 0),  // bottom-middle (origin is here)
-                new Vector2Int(1, 0),  // right-bottom
-                new Vector2Int(-1, 1), // left-top
-                new Vector2Int(0, 1),  // middle-top
-                new Vector2Int(1, 1)   // right-top
-            };
+            tileOffsets = ThreeXTwo;
         }
         if (structure.size == new Vector2(5, 3)) //Use 5x3 Size
         {
-            tileOffsets = new Vector2Int[]
-            {
-                new Vector2Int(1, 0),
-                new Vector2Int(1, 1),
-                new Vector2Int(0, 1),
-                new Vector2Int(-1, 1),
-                new Vector2Int(-1, 0),
-                new Vector2Int(0, 0),
-                new Vector2Int(1, -1),
-                new Vector2Int(0, -1),
-                new Vector2Int(-1, -1),
-                new Vector2Int(2, 1),
-                new Vector2Int(2, 0),
-                new Vector2Int(2, -1),
-                new Vector2Int(-2, 1),
-                new Vector2Int(-2, 0),
-                new Vector2Int(-2, -1)
-            };
+            tileOffsets = FiveXThree;
         }
 
 
@@ -269,7 +271,12 @@ public class AIBuildManager : MonoBehaviour
             // Instantiate the structure at the desired world position.
             // (Assuming buildPositionOffset is used to convert from grid space to world space.)
             Vector2 worldPos = buildPos + buildPositionOffset;
-            Instantiate(structure.structToSpawn, worldPos, Quaternion.identity);
+            GameObject building = Instantiate(structure.structToSpawn, worldPos, Quaternion.identity);
+
+            //Sets the building's quality/size & adds to a list of other built structures
+            building.GetComponent<UnitSpawner>().quality = structure.quality;
+            building.GetComponent<UnitSpawner>().size = structure.size;
+            structuresOnField.Add(building);
 
             // Deduct the cost.
             gm.enemyGold -= structure.cost;
@@ -306,9 +313,50 @@ public class AIBuildManager : MonoBehaviour
         return chosen;
     }
 
-    //===========================================================================================================
-    // Rush AI
-    //===========================================================================================================
+    private GameObject FindLowestQualityStructure()
+    {
+        //Loops through each built structure and return the first lowest quality one
+        int q = int.MaxValue;
+        GameObject g = null;
+        foreach (GameObject s in structuresOnField)
+        {
+            int x = s.GetComponent<UnitSpawner>().quality;
+            if (q > x)
+            {
+                q = x;
+                g = s;
+            }
+        }
+        return g;
+    }
+
+    private void SellLowestQualityStructure()
+    {
+        GameObject lowesetQualityStruct = FindLowestQualityStructure();
+        Vector2Int[] offsets = new Vector2Int[] { new Vector2Int(0, 0) };
+        if (lowesetQualityStruct.GetComponent<UnitSpawner>().size == new Vector2(3, 2)) //Use 3x2 Size
+        {
+            offsets = ThreeXTwo;
+        }
+        if (lowesetQualityStruct.GetComponent<UnitSpawner>().size == new Vector2(5, 3)) //Use 5x3 Size
+        {
+            offsets = FiveXThree;
+        }
+
+        // UNMark all the cells as empty.
+        foreach (Vector2Int offset in offsets)
+        {
+            Vector2 location = new Vector2(lowesetQualityStruct.transform.position.x, lowesetQualityStruct.transform.position.y) - buildPositionOffset;
+            Vector2Int locationInt = new Vector2Int((int)location.x, (int)location.y);
+            Vector2Int posToMark = locationInt + offset;
+            spawnGrid[posToMark.x, posToMark.y] = null;
+        }
+        structuresOnField.Remove(lowesetQualityStruct);
+        //Refunds a % of the original cost
+        gm.enemyGold += lowesetQualityStruct.GetComponent<UnitSpawner>().cost / 10;
+        Destroy(lowesetQualityStruct);
+    }
+
     private void RushAiLogic()
     {
         // When starting gold is still available, build the cheapest (lowest quality) structures.

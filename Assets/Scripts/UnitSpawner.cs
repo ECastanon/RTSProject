@@ -4,9 +4,12 @@ using UnityEngine.UI;
 
 public class UnitSpawner : MonoBehaviour
 {
-    [Header("HP Values")]
+    [Header("Structure Data")]
     public float totalHP;
     public float hp;
+    [HideInInspector] public int quality;
+    [HideInInspector] public Vector2 size;
+    [HideInInspector] public int cost;
 
     [Header("Spawn Data")]
     public GameObject UnitToSpawn;
