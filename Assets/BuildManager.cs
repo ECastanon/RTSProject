@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BuildManager : MonoBehaviour
@@ -5,6 +6,9 @@ public class BuildManager : MonoBehaviour
     private GameObject buildCanvas;
     private GameObject buildGridView;
     private MouseController mouseController;
+
+    public Vector2Int gridSize;
+    public Vector2 playerGridLocationOffest;
 
     public bool buildModeEnabled;
 
@@ -20,6 +24,35 @@ public class BuildManager : MonoBehaviour
 
     private Vector2 tilePos;
 
+    private Vector2Int[] ThreeXTwo = new Vector2Int[]
+    {
+        new Vector2Int(-1, 0), // left-bottom
+        new Vector2Int(0, 0),  // bottom-middle (origin is here)
+        new Vector2Int(1, 0),  // right-bottom
+        new Vector2Int(-1, 1), // left-top
+        new Vector2Int(0, 1),  // middle-top
+        new Vector2Int(1, 1)   // right-top
+    };
+    private Vector2Int[] FiveXThree = new Vector2Int[]
+    {
+        new Vector2Int(1, 0),
+        new Vector2Int(1, 1),
+        new Vector2Int(0, 1),
+        new Vector2Int(-1, 1),
+        new Vector2Int(-1, 0),
+        new Vector2Int(0, 0),
+        new Vector2Int(1, -1),
+        new Vector2Int(0, -1),
+        new Vector2Int(-1, -1),
+        new Vector2Int(2, 1),
+        new Vector2Int(2, 0),
+        new Vector2Int(2, -1),
+        new Vector2Int(-2, 1),
+        new Vector2Int(-2, 0),
+        new Vector2Int(-2, -1)
+    };
+    public List<Vector2> playerGrid = new List<Vector2>();
+
     private void Start()
     {
         mouseController = GetComponent<MouseController>();
@@ -30,6 +63,8 @@ public class BuildManager : MonoBehaviour
         buildGridView.SetActive(false);
 
         structurePlaceHolder.SetActive(false);
+
+        CreatePlayerGridLocations();
     }
 
     private void Update()
@@ -61,7 +96,7 @@ public class BuildManager : MonoBehaviour
 
             if (Input.GetMouseButtonDown(0) && buildSize != "")
             {
-                CheckStructurePlacement(buildSize);
+                CheckStructurePlacement();
             }
         }
         else
@@ -80,70 +115,53 @@ public class BuildManager : MonoBehaviour
         // If it hits something on the specified layer...
         if (hit.collider != null)
         {
+            Debug.Log("I HIT: " +  hit.collider.gameObject.name + " @ " + tile);
             isAvailable = false; // Mark placement as taken
         }
 
         return isAvailable;
     }
 
-    private void CheckStructurePlacement(string size)
+    private void CheckStructurePlacement()
     {
         //Checks if the structure can fit within the given sizes.
         //If it cannot the function will end before placement is called
-        if(size == "3x2")
+        if(buildSize == "3x2")
         {
-            Vector2[] tileOffsets = {
-                new Vector2(1, 0),
-                new Vector2(1, 1),
-                new Vector2(0, 1),
-                new Vector2(-1, 1),
-                new Vector2(-1, 0),
-                new Vector2(0, 0)
-            };
-
-            //Returns if any tile is not available
-            foreach (Vector2 offset in tileOffsets)
+            if (IfStructureIsOnGrid())
             {
-                if (!CheckIfTileIsAvailable(tilePos + offset))
+                //Returns if any tile is not available
+                foreach (Vector2 offset in ThreeXTwo)
                 {
-                    Debug.Log("OBSTRUCTION IN THE WAY!");
-                    return;
+                    if (!CheckIfTileIsAvailable(tilePos + offset))
+                    {
+                        Debug.Log("2 I HIT @ " + (tilePos + offset));
+                        Debug.Log("OBSTRUCTION IN THE WAY!");
+                        return;
+                    }
                 }
             }
+            else { return; }
         }
-        if (size == "5x3")
+        if (buildSize == "5x3")
         {
-            Vector2[] tileOffsets = {
-                new Vector2(1, 0),
-                new Vector2(1, 1),
-                new Vector2(0, 1),
-                new Vector2(-1, 1),
-                new Vector2(-1, 0),
-                new Vector2(0, 0),
-                new Vector2(1, -1),
-                new Vector2(0, -1),
-                new Vector2(-1, -1),
-                new Vector2(2, 1),
-                new Vector2(2, 0),
-                new Vector2(2, -1),
-                new Vector2(-2, 1),
-                new Vector2(-2, 0),
-                new Vector2(-2, -1),
-            };
-
-            //Returns if any tile is not available
-            foreach (Vector2 offset in tileOffsets)
+            if(IfStructureIsOnGrid())
             {
-                if (!CheckIfTileIsAvailable(tilePos + offset))
+                //Returns if any tile is not available
+                foreach (Vector2 offset in FiveXThree)
                 {
-                    Debug.Log("OBSTRUCTION IN THE WAY!");
-                    return;
+                    if (!CheckIfTileIsAvailable(tilePos + offset))
+                    {
+                        Debug.Log("OBSTRUCTION IN THE WAY!");
+                        return;
+                    }
                 }
             }
+            else { return; }
         }
         else
         {
-            Debug.Log("INCORRECT SIZE: " + size);
+            Debug.Log("INCORRECT SIZE: " + buildSize);
         }
         Debug.Log("STRUCTURE PLACED!");
         PlaceStructure();
@@ -172,5 +190,50 @@ public class BuildManager : MonoBehaviour
         placeHolders[1].SetActive(true);
         structurePlaceHolder = placeHolders[1];
         structureToPlace = structures[1];
+    }
+
+    private void CreatePlayerGridLocations()
+    {
+        List<Vector2> grid = new List<Vector2>();
+        for (int x = 0; x < gridSize.x; x++)
+        {
+            for (int y = 0; y < gridSize.y; y++)
+            {
+                playerGrid.Add(new Vector2(x + playerGridLocationOffest.x, y + playerGridLocationOffest.y));
+            }
+        }
+    }
+
+    private bool IfStructureIsOnGrid()
+    {
+        //Checks each size and checks if each structure's tile can fit within the playerGrid
+        if (buildSize == "3x2")
+        {
+            foreach (Vector2 offset in ThreeXTwo)
+            {
+                //Checks if any tile of the structure is NOT on the grid
+                if (!playerGrid.Contains(offset + tilePos))
+                {
+                    Debug.Log(offset + tilePos);
+                    Debug.Log("IS NOT ALL ON THE GRID");
+                    return false;
+                }
+            }
+        }
+
+        if (buildSize == "5x3")
+        {
+            foreach (Vector2 offset in FiveXThree)
+            {
+                //Checks if any tile of the structure is NOT on the grid
+                if (!playerGrid.Contains(offset + tilePos))
+                {
+                    Debug.Log("IS NOT ALL ON THE GRID");
+                    return false;
+                }
+            }
+        }
+        //Returns true if all pieces are on the grid
+        return true;
     }
 }

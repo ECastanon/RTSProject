@@ -344,7 +344,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -24.5, y: 3.5, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.95, y: 0.95, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8298072081632628980}
@@ -369,6 +369,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   totalHP: 140
   hp: 0
+  quality: 0
+  size: {x: 0, y: 0}
+  cost: 0
   UnitToSpawn: {fileID: 4619220038370211738, guid: a4415aad491031649b6c07fdb5496abc, type: 3}
   ownedByPlayer: 1
   numberToSpawn: 3

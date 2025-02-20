@@ -3284,7 +3284,7 @@ MonoBehaviour:
   isHero: 0
   deathTimer: 3
   isDefeated: 0
-  defeatValue: 500
+  defeatValue: 10
 --- !u!114 &7191542632405797497
 MonoBehaviour:
   m_ObjectHideFlags: 0
