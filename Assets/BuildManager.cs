@@ -26,8 +26,8 @@ public class BuildManager : MonoBehaviour
 
     private Vector2Int[] ThreeXTwo = new Vector2Int[]
     {
-        new Vector2Int(-1, 0), // left-bottom
         new Vector2Int(0, 0),  // bottom-middle (origin is here)
+        new Vector2Int(-1, 0), // left-bottom
         new Vector2Int(1, 0),  // right-bottom
         new Vector2Int(-1, 1), // left-top
         new Vector2Int(0, 1),  // middle-top
